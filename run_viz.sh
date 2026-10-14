@@ -1,0 +1,1 @@
+../gfn-env/bin/python viz_tetris.py

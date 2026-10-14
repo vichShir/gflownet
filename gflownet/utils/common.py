@@ -440,7 +440,8 @@ def load_gflownet_from_rundir(
 
     if load_last_checkpoint:
         checkpoint_latest = find_latest_checkpoint(rundir / config.logger.logdir.ckpts)
-        checkpoint = torch.load(checkpoint_latest, map_location=set_device(device))
+        print('Latest ckpt:', checkpoint_latest)
+        checkpoint = torch.load(checkpoint_latest, map_location=set_device(device), weights_only=False)
 
         # Set run id in logger to enable WandB resume
         config.logger.run_id = checkpoint["run_id"]
@@ -500,6 +501,7 @@ def load_gflownet_from_rundir(
     # Load checkpoint into the GFlowNet agent
     if load_last_checkpoint:
         gflownet.load_checkpoint(checkpoint)
+        print('Loaded checkpoint.')
 
     return gflownet, config
 

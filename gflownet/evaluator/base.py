@@ -296,10 +296,10 @@ class BaseEvaluator(AbstractEvaluator):
             if "corr_probs_rewards" in metrics:
                 probs_x_tt = np.exp(logprobs_x_tt.cpu().numpy())
                 lp_metrics["corr_probs_rewards"] = np.corrcoef(
-                    probs_x_tt, rewards_x_tt
+                    probs_x_tt, rewards_x_tt.cpu().numpy()
                 )[0, 1]
                 lp_metrics["corr_logprobs_logrewards"] = np.corrcoef(
-                    logprobs_x_tt, logrewards_x_tt
+                    logprobs_x_tt.cpu().numpy(), logrewards_x_tt.cpu().numpy()
                 )[0, 1]
                 lp_data["probs"] = probs_x_tt
                 lp_data["logprobs"] = logprobs_x_tt
@@ -642,10 +642,10 @@ class BaseEvaluator(AbstractEvaluator):
             fig_scatter_rewards_probs, ax = plt.subplots(
                 nrows=1, ncols=2, figsize=(8, 4), dpi=150
             )
-            ax[0].scatter(rewards, probs)
+            ax[0].scatter(rewards.cpu().numpy(), probs)
             ax[0].set_xlabel(f"Rewards")
             ax[0].set_ylabel(f"Probs")
-            ax[1].scatter(logrewards, logprobs)
+            ax[1].scatter(logrewards.cpu().numpy(), logprobs.cpu().numpy())
             ax[1].set_xlabel(f"Log-rewards")
             ax[1].set_ylabel(f"Log-probs")
             fig_scatter_rewards_probs.tight_layout()

@@ -1131,10 +1131,11 @@ class GFlowNetAgent:
         )
         for self.it in range(self.it, self.n_train_steps + 1):
             # Test and log
-            if self.evaluator.should_eval(self.it):
-                self.evaluator.eval_and_log(self.it)
-            if self.evaluator.should_eval_top_k(self.it):
-                self.evaluator.eval_and_log_top_k(self.it)
+            # if self.evaluator.should_eval(self.it):
+            #     self.evaluator.eval_and_log(self.it)
+            # if self.evaluator.should_eval_top_k(self.it):
+            #     self.evaluator.eval_and_log_top_k(self.it)
+            # import ipdb; ipdb.set_trace()
 
             t0_iter = time.time()
             batch = Batch(

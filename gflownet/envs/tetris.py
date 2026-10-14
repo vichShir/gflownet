@@ -580,7 +580,7 @@ class Tetris(GFlowNetEnv):
         linewidth : int
             The width of the separation between cells, in pixels.
         """
-        board = board.clone().numpy()
+        board = board.cpu().clone().numpy()
         height = board.shape[0] * cellsize
         width = board.shape[1] * cellsize
         board_img = 128 * np.ones(
