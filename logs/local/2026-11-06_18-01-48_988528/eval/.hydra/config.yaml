@@ -1,0 +1,17 @@
+device: cpu
+float_precision: 32
+rundir: /home/victor/projects/sardinha/gflownet/logs/local/2026-11-06_18-01-48_988528
+conditional_env_config_path: null
+n_samples: 1000
+sampling_batch_size: 100
+output_dir: null
+print_config: false
+samples_only: false
+randominit: false
+ckpt_id: 5000
+user:
+  logdir:
+    root: ./logs
+  data:
+    root: ./data
+    alanine_dipeptide: ~/gflownet/data/alanine_dipeptide_conformers_1.npy

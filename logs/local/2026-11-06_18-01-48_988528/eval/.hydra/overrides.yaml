@@ -1,0 +1,5 @@
+- device=cpu
+- rundir=/home/victor/projects/sardinha/gflownet/logs/local/2026-11-06_18-01-48_988528
+- n_samples=1000
+- randominit=False
+- ckpt_id=5000
