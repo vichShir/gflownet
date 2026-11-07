@@ -188,7 +188,7 @@ def resolve_path(path: str) -> Path:
     return Path(expandvars(str(path))).expanduser().resolve()
 
 
-def find_latest_checkpoint(ckpt_dir):
+def find_latest_checkpoint(ckpt_dir, ckpt_id=None):
     """
     Find the latest checkpoint in the input directory.
 
@@ -213,14 +213,17 @@ def find_latest_checkpoint(ckpt_dir):
     """
     ckpt_dir = Path(ckpt_dir)
     final = [f for f in ckpt_dir.glob(f"*final*")]
-    if len(final) > 0:
+    if len(final) > 0 and ckpt_id is None:
         return final[0]
     ckpts = [f for f in ckpt_dir.glob(f"iter_*")]
     if not ckpts:
         raise ValueError(
             f"No checkpoints found in {ckpt_dir} with pattern iter_* or *final*"
         )
-    return sorted(ckpts, key=lambda f: float(f.stem.split("iter_")[1]))[-1]
+    for ckpt_path in sorted(ckpts, key=lambda f: float(f.stem.split("iter_")[1])):
+        if str(ckpt_id) in str(ckpt_path):
+            return ckpt_path
+    return final[0]
 
 
 def read_hydra_config(rundir=None, config_name="config"):
@@ -384,6 +387,7 @@ def load_gflownet_from_rundir(
     device=None,
     load_last_checkpoint=True,
     is_resumed: bool = False,
+    ckpt_id: int = 0,
 ):
     """
     Load GFlowNet from a run path (directory with a `.hydra` directory inside).
@@ -439,7 +443,7 @@ def load_gflownet_from_rundir(
     # -----------------------------------------
 
     if load_last_checkpoint:
-        checkpoint_latest = find_latest_checkpoint(rundir / config.logger.logdir.ckpts)
+        checkpoint_latest = find_latest_checkpoint(rundir / config.logger.logdir.ckpts, ckpt_id)
         print('Latest ckpt:', checkpoint_latest)
         checkpoint = torch.load(checkpoint_latest, map_location=set_device(device), weights_only=False)
 

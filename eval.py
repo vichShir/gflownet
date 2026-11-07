@@ -40,6 +40,7 @@ def main(config):
         no_wandb=True,
         print_config=config.print_config,
         load_last_checkpoint=load_last_checkpoint,
+        ckpt_id=config.ckpt_id,
     )
     env = gflownet.env
 
@@ -132,15 +133,15 @@ def main(config):
         df = pd.concat(
             [pd.read_csv(f, index_col=0) for f in tqdm(list(tmp_dir.glob("*.csv")))]
         )
-        df.to_csv(output_dir / f"{prefix}_samples.csv")
+        df.to_csv(output_dir / f"{prefix}_samples_ckpt_{config.ckpt_id}.csv")
         dct = {k: [] for k in dct.keys()}
         for f in tqdm(list(tmp_dir.glob("*.pkl"))):
             tmp_dict = pickle.load(open(f, "rb"))
             dct = {k: v + tmp_dict[k] for k, v in dct.items()}
-        pickle.dump(dct, open(output_dir / f"{prefix}_samples.pkl", "wb"))
+        pickle.dump(dct, open(output_dir / f"{prefix}_samples_ckpt_{config.ckpt_id}.pkl", "wb"))
 
-        if "y" in input("Delete temporary files? (y/n)"):
-            shutil.rmtree(tmp_dir)
+        # if "y" in input("Delete temporary files? (y/n)"):
+        shutil.rmtree(tmp_dir)
 
     else:
         print(
