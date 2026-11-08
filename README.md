@@ -64,6 +64,7 @@ Create the environment and install the dependencies:
 ```bash
 uv venv ./gfn-env --python 3.10
 uv pip install --python ./gfn-env/bin/python .
+uv pip install --python ./gfn-env/bin/python seaborn
 ```
 
 > To install any other packages: `uv pip install --python ./gfn-env/bin/python ipdb`
@@ -72,206 +73,36 @@ uv pip install --python ./gfn-env/bin/python .
 - It is also **possible to install a CPU-only environment** that supports most features (see below).
 - Setup is currently only supported on Ubuntu. It should also work on OSX, but you will need to handle the package dependencies.
 
-## Quickstart: How to train a GFlowNet model
+## Quickstart: How to train a GFlowNet model for Tetris
 
-The gflownet library uses [Hydra](https://hydra.cc/docs/intro/) to handle configuration files. This allows, for instance, to easily train a GFlowNet with the configuration of a specific YAML file. For example, to train a GFlowNet with a 10x10 Grid environment and the corners proxy, with the configuration from `./config/experiments/grid/corners.yaml`, we can simply run:
-
-```bash
-python train.py +experiments=grid/corners
-```
-
-Alternatively, we can explicitly indicate the environment and the proxy as follows:
+Execute the following script to train a GFlowNet model for the Tetris environment:
 
 ```bash
-python train.py env=grid proxy=box/corners
+bash run_train.sh
 ```
 
-The above command will train a GFlowNet with the default configuration, except for the environment, which will use `./config/env/grid.yaml`; and the proxy, which will use `./config/proxy/box/corners.yaml`.
-
-A typical use case of the gflownet library is to extend it with a new environment and a new proxy to fit your purposes. In that case, you could create their respective configuration files `./config/env/myenv.yaml` and `./config/proxy/myproxy.yaml` and run
-
-```bash
-python train.py env=myenv proxy=myproxy
-```
-
-The objective function to optimise is selected directly via the `gflownet` configuration. The following GFlowNet objectives are supported:
-
-- [Flow-matching (FM)](https://arxiv.org/abs/2106.04399): `gflownet=flowmatch`
-- [Trajectory balance (TB)](https://arxiv.org/abs/2201.13259): `gflownet=trajectorybalance`
-- [Detailed balance (DB)](https://arxiv.org/abs/2201.13259): `gflownet=detailedbalance`
-- [Forward-looking (FL)](https://arxiv.org/abs/2302.01687): `gflownet=forwardlooking`
-
-All other configurable options are handled similarly. For example, we recommend creating a user configuration file in `./config/user/myusername.yaml` specifying the directory for the log files in `logdir.root`. Then, it can be included in the command with `user=myusername` or `user=$USER` if the name of the YAML file matches our system username.
-
-As another example, you may also want to configure the functionality of the Logger, the class which helps manage logging to [Weights & Biases](https://wandb.ai/) during the training and evaluation of the model. Logging to WandB is disabled by default. In order to enable it, make sure to set up your WandB API key and set the configuration variable `logger.do.online` to `True` in your experiment config file or via the command line:
-
-```bash
-python train.py +experiments=grid/corners logger.do.online=True
-```
-
-Finally, also note that by default, PyTorch will operate on the CPU because we have not observed performance improvements by running on the GPU. You may run on GPU with `device=cuda`.
+> It may take around 1 hour to process 5000 timesteps using CPU.
 
 ## Evaluation of a trained GFlowNet
 
-To evaluate a trained GFlowNet and sample from it, we can use the script `eval.py`. For example:
+To evaluate a trained GFlowNet and sample from it, we can use the script `run_eval.sh`. Check the `rundir` argument to the desired model checkpoint (`./logs` directory). For example:
 
 ```
-python eval.py rundir=path/to/run/directory n_samples=1000
+bash run_eval.sh
 ```
 
-Obviously, the run directory must contain the Hydra configuration and checkpoints of a pre-trained GFlowNet. Additional arguments that can be passed to `eval.py` can be consulted in `./config/eval.yaml`.
+> The script consider you trained the GFlowNet model with 5000 timesteps.
 
-## Resuming the training of GFlowNet
+## Visualizing Tetris boards
 
-If the training of a GFlowNet has crashed or simply we want to train it for longer, it is possible to resume training with the script `resume.py`, provided the run direcotory contains the checkpoints of the GFlowNet. By default, the latest checkpoint will be used to reload the model:
+To visualize the best Tetris board from a random or trained model, use the following scripts, respectively:
 
 ```
-python resume.py rundir=path/to/run/directory
+bash run_viz_random.sh
+bash run_viz_trained.sh
 ```
 
-## Exploring the Scrabble environment
-
-To better understand the functionality and implementation of GFlowNet environments, let us explore the Scrabble environment in more detail.
-
-1. Instantiating a Scrabble environment
-
-```python
-from gflownet.envs.scrabble import Scrabble
-env = Scrabble()
-```
-
-2. Checking the initial (source) state
-
-Every environment has a `state` attribute, which gets updated as actions are performed. The initial state correspond to the `source` state:
-
-```python
-env.state
->>> [0, 0, 0, 0, 0, 0, 0]
-env.equal(env.state, env.source)
->>> True
-```
-
-In the Scrabble environment, the state is represented by a list of letter indices, padded by 0's up to the maximum word length (7 by default).
-
-3. Checking the action space
-
-The actions of every environment are represented by tuples, and the set of all possible actions makes the action space:
-
-```python
-env.action_space
->>> [(1,), (2,), (3,), (4,), (5,), (6,), (7,), (8,), (9,), (10,), (11,), (12,), (13,), (14,), (15,), (16,), (17,), (18,), (19,), (20,), (21,), (22,), (23,), (24,), (25,), (26,), (-1,)]
-```
-
-In the Scrabble environment, the actions to append a letter from the English alphabet is represented by a single-element tuple with the letter index, from 1 to 26. The action space also contains (-1,) which represents the end-of-sequence (EOS) action, indicating the termination of word formation.
-
-```python
-env.eos
->>> (-1,)
-```
-
-4. Performing a step
-
-We can apply one action from the action space to perform a state transition via the `step()` method:
-
-```python
-action = (1,)  # Action to add 'A'
-new_state, performed_action, is_valid = env.step(action)
-print("Updated state:", new_state)
-print("Performed action:", performed_action)
-print("Action was valid:", is_valid)
->>> Updated state: [1, 0, 0, 0, 0, 0, 0]
->>> Performed action: (1,)
->>> Action was valid: True
-env.equal(env.state, new_state)
->>> True
-```
-
-This function randomly selects a valid action (adding a letter or ending the sequence) and applies it to the environment. The output shows the new state, the action taken, and whether the action was valid.
-
-5. Performing a random step
-
-We can also use the method `step_random()` to perform a randomly sampled action:
-
-```python
-new_state, performed_action, is_valid = env.step_random()
-print("Updated state:", new_state)
-print("Performed action:", performed_action)
-print("Action was valid:", is_valid)
->>> Updated state: [1, 24, 0, 0, 0, 0, 0]
->>> Performed action: (24,)
->>> Action was valid: True
-```
-
-6. Unfolding a full random trajectory
-
-Similarly, we can also unfold a complete random trajectory, that is a sequence of actions terminated by the EOS action:
-
-```python
-final_state, trajectory_actions = env.trajectory_random()
-print("Final state:", final_state)
-print("Sequence of actions:", trajectory_actions)
-print("Trajectory is done:", env.done)
->>> Final state: [1, 24, 10, 6, 4, 21, 21]
->>> Sequence of actions: [(1,), (24,), (10,), (6,), (4,), (21,), (21,), (-1,)]
->>> Trajectory is done: True
-```
-
-7. Displaying the state as a human readable string
-
-```python
-env.state2readable()
->>> 'A X J F D U U'
-```
-
-8. Reset enviroment 
-
-```python
-env.reset()
-env.state
->>> [0, 0, 0, 0, 0, 0, 0]
-```
-
-So far, we've seen how to manually set actions or use random actions in the GFlowNet environment. This approach is useful for testing or understanding the basic mechanics of the environment. However, in practice, the goal of a GFlowNet agent is to adjust the parameters of the policy model to sample actions that result in trajectories with likelihoods proportional to the reward.
-
-As the agent interacts with the environment, it collects data about the outcomes of its actions. This data is used to train the policy networks, which model the probability of state transitions given the current state.
-
-9. Sample a batch of trajectories from a trained agent 
-
-```python
-batch, _ = gflownet.sample_batch(n_forward=3,  train=False)
-batch.states
->>> [[20, 20, 21, 3, 0, 0, 0], [12, 16, 8, 6, 14, 11, 20], [17, 17, 16, 23, 20, 16, 24]]
-```
-
-We can convert the first state to human readable:
-
-```python
-env.state2readable(batch.states[0])
->>> 'T T U C'
-```
-
-We can also compute the rewards and the proxy for all states or single state.
-
-```python
-proxy(env.states2proxy(batch.states))
->>> tensor([ 6., 19., 39.])
-```
-
-Or single state
-
-```python
-proxy(env.state2proxy(batch.states[0]))
->>> tensor([6.])
-```
-
-The `state2proxy` and `states2proxy` are helper functions that transform the input to appropriate format. For example to tensor. 
-
-We can also compute the rewards, and since our transformation function `g` is the identity, the rewards should be equal to the proxy directly. 
-
-```python
-proxy.rewards(env.states2proxy(batch.states))
->>> tensor([ 6., 19., 39.])
-```
+> It will run 2000 plays and select the best play. Also, do not forget to specify the model checkpoint path (`./logs` directory).
 
 ## Contributors
 
